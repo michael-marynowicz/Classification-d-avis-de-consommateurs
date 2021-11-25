@@ -31,7 +31,7 @@ def trigrram(): #essais pour avoir le context
 
 def sentiment(sentence):
     sia = SentimentIntensityAnalyzer()
-    return interprete(sia.polarity_scores("A little more compact and lightweight than its predecessor, the iPhone 12 nevertheless carries many improvements, such as its OLED screen which, failing to offer the best contrast, shines with its perfectly calibrated colors or almost. The latest iPhone also gains access to the 5G network and benefits from an even more impressive A14 Bionic chip than the A13 of the previous generation. However, there is still a lack of improvement in the function that would probably have needed it the most, namely the photo. While the two 12-megapixel modules of the iPhone 12 are far from bad, they remain behind what the direct competition offers, in terms of versatility at least, and often also in image quality. We also regret the lack of progress in autonomy and, above all, that Apple decided to remove the AC adapter from the cabinet while the transition to USB-C is still far from complete. Newcomers to the Apple ecosystem may quickly become disillusioned with the Lightning. It will take for the others come from a model older than the iPhone 11 to find an interest other than the support of the 5G to this iPhone 12, certainly very good, but ultimately only strengthening the assets.")) 
+    return interprete(sia.polarity_scores(sentence)) 
 
 def interprete(sentiment):
     
