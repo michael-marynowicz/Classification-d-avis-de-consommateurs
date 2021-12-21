@@ -12,10 +12,12 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import recall_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import precision_score
 from sklearn.metrics import classification_report
+import numpy as np
+from numpy import array, empty
+from scipy import sparse
+from scipy.sparse import csr_matrix
+import numpy as np
 
     # a faire :
         # utiliser word2vec
@@ -27,47 +29,116 @@ def algo_with_svm():
     data = pd.read_csv('reviews.csv')
     nom = data["Product Name"].head(30000)
     reviews = data['Reviews'].head(30000)
-    """x_tokenized = [[w for w in sentence.split(" ") if w != ""] for sentence in reviews]
-    model = gensim.models.Word2Vec(x_tokenized, min_count=1)"""
-    
-    
-    
+
     #reviews = correction(reviews) utiliser la correction prend beaucoup de temps et n'augmente pas la precision
     rating = data['Rating'].head(30000)
     cat = categorie(rating)
 
-#loading the model
-    #model = gensim.models.KeyedVectors.load_word2vec_format('model.bin', binary=True) 
-
-#getting the vector for any word
     
     
     
     #Vectorizer les phrases
     vectorizer = CountVectorizer()
     reviews = vectorizer.fit_transform(reviews)
+
     #Split la liste entre la zone de training et de test 
-    X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.70)
-
+    X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.30)
+   
     #Declaration du modele
-    clf_svc = svm.SVC(kernel='rbf', decision_function_shape='ovr')
-    print(y_test[0])
-    #Entrainement du modele
-    clf_svc.fit(X_train, y_train)
 
-    print(X_test)
+    clf_svc1 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
+    clf_svc2 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
+    clf_svc3 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
+
+    #<class 'scipy.sparse.csr.csr_matrix'>
+
+    X_train_very_good_and_neutre = []
+    X_test_very_good_and_neutre = []
+
+    X_train_neutre_and_very_bad = []
+    X_test_neutre_and_very_bad = []
+
+    X_train_very_bad_and_very_good = []
+    X_test_very_bad_and_very_good = []
+
+    y_train_very_good_and_neutre= []
+    y_test_very_good_and_neutre= []
+
+    y_train_neutre_and_very_bad= []
+    y_test_neutre_and_very_bad= []
+
+    y_train_very_bad_and_very_good = []
+    y_test_very_bad_and_very_good = []
+
+    for i in range(len(y_test)):
+        if (y_test[i]=="very good" or y_test[i]=="neutre"):
+            X_test_very_good_and_neutre.append(X_test[i].toarray()[0])
+            
+            y_test_very_good_and_neutre.append(y_test[i])
+
+        if (y_test[i]=="very bad" or y_test[i]=="neutre"):
+          
+            
+            X_test_neutre_and_very_bad.append(X_test[i].toarray()[0])
+            
+            y_test_neutre_and_very_bad.append(y_test[i])
+
+        if(y_test[i]=="very bad" or y_test[i]=="very good"):           
+            
+            X_test_very_bad_and_very_good.append(X_test[i].toarray()[0])
+            
+            y_test_very_bad_and_very_good.append(y_test[i])
+
+
+
+
+    for i in range(len(y_train)):
+
+        if (y_train[i]=="very good" or y_train[i]=="neutre"):
+
+            X_train_very_good_and_neutre.append(X_train[i].toarray()[0])
+            
+            y_train_very_good_and_neutre.append(y_train[i])
+
+        if (y_train[i]=="very bad" or y_train[i]=="neutre"):
+          
+            X_train_neutre_and_very_bad.append(X_train[i].toarray()[0])
+            
+            y_train_neutre_and_very_bad.append(y_train[i])
+       
+        if(y_train[i]=="very bad" or y_train[i]=="very good"):
+            
+            X_train_very_bad_and_very_good.append(X_train[i].toarray()[0])
+            
+            y_train_very_bad_and_very_good.append(y_train[i])
+    
+    
+    X_train_very_good_and_neutre = sparse.csc_matrix(X_train_very_good_and_neutre)
+    X_train_neutre_and_very_bad = sparse.csc_matrix(X_train_neutre_and_very_bad)
+    X_train_very_bad_and_very_good = sparse.csc_matrix(X_train_very_bad_and_very_good)
+
+    X_test_very_good_and_neutre = sparse.csc_matrix(X_test_very_good_and_neutre)
+    X_test_neutre_and_very_bad = sparse.csc_matrix(X_test_neutre_and_very_bad)
+    X_test_very_bad_and_very_good = sparse.csc_matrix(X_test_very_bad_and_very_good)
+
+    clf_svc1.fit(X_train_very_good_and_neutre, y_train_very_good_and_neutre) # j'ai essayé de convertir X_train_very_good_and_neutre mais ca bug 
+    clf_svc2.fit(X_train_neutre_and_very_bad, y_train_neutre_and_very_bad) # bug a cause de X_train_neutre_and_very_bad qui n'est pas une csr_matrix
+    clf_svc3.fit(X_train_very_bad_and_very_good, y_train_very_bad_and_very_good)# bug 
     
     #Le modèle prédit sur la zone de test 
-    result = clf_svc.predict(X_test)
+    result1 = clf_svc1.predict(X_test_very_good_and_neutre) 
+    result2 = clf_svc2.predict(X_test_neutre_and_very_bad) 
+    result3 = clf_svc3.predict(X_test_very_bad_and_very_good) 
+
     #statistiques
-    print(classification_report(y_test, result))
+    print("very good and neutre = \n",classification_report(y_test_very_good_and_neutre, result1))
+    print("neutre and very bad = \n",classification_report(y_test_neutre_and_very_bad, result2))
+    print("very good and very bad = \n",classification_report(y_test_very_bad_and_very_good, result3))
     
-
-    
-
-
     #On compare le resultat aux notes
-    print(confusion_matrix(result, y_test))
+    print("very good and neutre = \n",confusion_matrix(result1, y_test_very_good_and_neutre))
+    print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad))
+    print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good))
     #print(reviews)
 
     
@@ -93,7 +164,6 @@ def categorie(tab):
             cat.append("very good")
     verybad = 0
     neutre=0
-    good=0
     verygood=0
     for i in range(len(cat)):
         if (cat[i]=="very bad"):
