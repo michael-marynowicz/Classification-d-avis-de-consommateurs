@@ -18,6 +18,11 @@ from numpy import array, empty
 from scipy import sparse
 from scipy.sparse import csr_matrix
 import numpy as np
+from sklearn.metrics import PrecisionRecallDisplay
+from sklearn.metrics import precision_score
+from pandas import *
+from sklearn import *
+
 
     # a faire :
         # utiliser word2vec
@@ -27,19 +32,17 @@ sia = SentimentIntensityAnalyzer()
 def algo_with_svm():
     #RECUPERATION DU CSV
     data = pd.read_csv('reviews.csv')
-    nom = data["Product Name"].head(30000)
-    reviews = data['Reviews'].head(30000)
+    nom = data["Product Name"].head(5000)
+    reviews = data['Reviews'].head(5000)
 
     #reviews = correction(reviews) utiliser la correction prend beaucoup de temps et n'augmente pas la precision
-    rating = data['Rating'].head(30000)
+    rating = data['Rating'].head(5000)
     cat = categorie(rating)
-
-    
-    
     
     #Vectorizer les phrases
     vectorizer = CountVectorizer()
     reviews = vectorizer.fit_transform(reviews)
+
 
     #Split la liste entre la zone de training et de test 
     X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.30)
@@ -90,8 +93,6 @@ def algo_with_svm():
             y_test_very_bad_and_very_good.append(y_test[i])
 
 
-
-
     for i in range(len(y_train)):
 
         if (y_train[i]=="very good" or y_train[i]=="neutre"):
@@ -120,16 +121,21 @@ def algo_with_svm():
     X_test_very_good_and_neutre = sparse.csc_matrix(X_test_very_good_and_neutre)
     X_test_neutre_and_very_bad = sparse.csc_matrix(X_test_neutre_and_very_bad)
     X_test_very_bad_and_very_good = sparse.csc_matrix(X_test_very_bad_and_very_good)
+    
+    clf_svc1.fit(X_train_very_good_and_neutre, y_train_very_good_and_neutre)
+    clf_svc2.fit(X_train_neutre_and_very_bad, y_train_neutre_and_very_bad) 
+    clf_svc3.fit(X_train_very_bad_and_very_good, y_train_very_bad_and_very_good)
 
-    clf_svc1.fit(X_train_very_good_and_neutre, y_train_very_good_and_neutre) # j'ai essayé de convertir X_train_very_good_and_neutre mais ca bug 
-    clf_svc2.fit(X_train_neutre_and_very_bad, y_train_neutre_and_very_bad) # bug a cause de X_train_neutre_and_very_bad qui n'est pas une csr_matrix
-    clf_svc3.fit(X_train_very_bad_and_very_good, y_train_very_bad_and_very_good)# bug 
+    """display = PrecisionRecallDisplay.from_estimator(
+    clf_svc1, X_test_very_good_and_neutre, y_test_very_good_and_neutre, name="LinearSVC")
+    _ = display.ax_.set_title("2-class Precision-Recall curve")
+    input()"""
     
     #Le modèle prédit sur la zone de test 
     result1 = clf_svc1.predict(X_test_very_good_and_neutre) 
     result2 = clf_svc2.predict(X_test_neutre_and_very_bad) 
     result3 = clf_svc3.predict(X_test_very_bad_and_very_good) 
-
+   
     #statistiques
     print("very good and neutre = \n",classification_report(y_test_very_good_and_neutre, result1))
     print("neutre and very bad = \n",classification_report(y_test_neutre_and_very_bad, result2))
@@ -139,9 +145,69 @@ def algo_with_svm():
     print("very good and neutre = \n",confusion_matrix(result1, y_test_very_good_and_neutre))
     print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad))
     print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good))
-    #print(reviews)
 
+    y_final = []
     
+    
+
+    """commentaire = "it's a really good phone"
+    c_l = list()
+    c_l.append(commentaire)
+    c_l = vectorizer.fit_transform(c_l)
+    c_l_matrix = sparse.csc_matrix(c_l)
+    print(np.shape(X_train))
+    print(np.shape(c_l_matrix))
+    print(X_train[0])
+    print(X_train[0].todense())
+    print(c_l_matrix[0])
+
+    clf_svc1.predict([[0,3,4]]) """
+
+
+
+
+
+
+
+
+
+
+
+
+    cat_commentaire1 = clf_svc1.predict(X_test)
+    cat_commentaire2 =clf_svc2.predict(X_test)
+    cat_commentaire3 =clf_svc3.predict(X_test)
+    print(type([y_test[0]]))
+    for i in range(len(y_test)):
+        o1=0
+        o2=0
+        o3 = 0
+        if (y_test[i]=="very good" or y_test[i]=="neutre"):
+            print(y_test[i],[cat_commentaire1[i]])
+            o1 = precision_score(y_test[i],cat_commentaire1[i],pos_label=['neutre', 'very good'])
+        if (y_test[i]=="very bad" or y_test[i]=="neutre"):
+            o2 = precision_score(y_test[i],cat_commentaire2[i],pos_label=['neutre', 'very bad'])
+        if (y_test[i]=="very good" or y_test[i]=="very bad"):
+            o3 = precision_score(y_test[i],cat_commentaire3[i],pos_label=['very bad', 'very good'])
+
+        if (max(o1,o2,o3)==o1):
+        
+            y_final.append(cat_commentaire1[i])
+
+        elif (max(o1,o2,o3)==o2):
+     
+            y_final.append(cat_commentaire2[i])
+
+        else:
+
+            y_final.append(cat_commentaire3[i])
+
+    print("y final = \n",confusion_matrix(y_final, y_test))
+    
+    
+    
+
+ 
     return 0
     
 
