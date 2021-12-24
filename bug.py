@@ -12,16 +12,18 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import recall_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import precision_score
 from sklearn.metrics import classification_report
 import numpy as np
 from numpy import array, empty
 from scipy import sparse
 from scipy.sparse import csr_matrix
 import numpy as np
-from scipy.sparse import csc_matrix
+from sklearn.metrics import PrecisionRecallDisplay
+from sklearn.metrics import precision_score
+from pandas import *
+from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import make_blobs
+
 
     # a faire :
         # utiliser word2vec
@@ -31,114 +33,170 @@ sia = SentimentIntensityAnalyzer()
 def algo_with_svm():
     #RECUPERATION DU CSV
     data = pd.read_csv('reviews.csv')
-    nom = data["Product Name"].head(30000)
-    reviews = data['Reviews'].head(30000)
-    """x_tokenized = [[w for w in sentence.split(" ") if w != ""] for sentence in reviews]
-    model = gensim.models.Word2Vec(x_tokenized, min_count=1)"""
-    
-    
-    
+    nom = data["Product Name"].head(5000)
+    reviews = data['Reviews'].head(5000)
+
     #reviews = correction(reviews) utiliser la correction prend beaucoup de temps et n'augmente pas la precision
-    rating = data['Rating'].head(30000)
+    rating = data['Rating'].head(5000)
     cat = categorie(rating)
-
-#loading the model
-    #model = gensim.models.KeyedVectors.load_word2vec_format('model.bin', binary=True) 
-
-#getting the vector for any word
-    
-    
     
     #Vectorizer les phrases
     vectorizer = CountVectorizer()
+    print("type reviews ",type(reviews[0]),reviews)
     reviews = vectorizer.fit_transform(reviews)
+
+
     #Split la liste entre la zone de training et de test 
-    X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.70)
+    X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.30)
    
     #Declaration du modele
-    clf_svc = svm.SVC(kernel='rbf', decision_function_shape='ovr')
 
-    clf_svc1 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
+    #clf_svc1 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
     clf_svc2 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
     clf_svc3 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
+    clf_svc1 = LogisticRegression()
 
     #<class 'scipy.sparse.csr.csr_matrix'>
 
     X_train_very_good_and_neutre = []
-    
+    X_test_very_good_and_neutre = []
+
     X_train_neutre_and_very_bad = []
-    
+    X_test_neutre_and_very_bad = []
+
     X_train_very_bad_and_very_good = []
-    essais1=csc_matrix(X_train[0])
-    essais2=csc_matrix(X_train[0])
-    essais3=csc_matrix(X_train[0])
+    X_test_very_bad_and_very_good = []
 
     y_train_very_good_and_neutre= []
+    y_test_very_good_and_neutre= []
+
     y_train_neutre_and_very_bad= []
+    y_test_neutre_and_very_bad= []
+
     y_train_very_bad_and_very_good = []
+    y_test_very_bad_and_very_good = []
+
+    for i in range(len(y_test)):
+        if (y_test[i]=="very good" or y_test[i]=="neutre"):
+            X_test_very_good_and_neutre.append(X_test[i].toarray()[0])
+            
+            y_test_very_good_and_neutre.append(y_test[i])
+
+        if (y_test[i]=="very bad" or y_test[i]=="neutre"):
+          
+            X_test_neutre_and_very_bad.append(X_test[i].toarray()[0])
+            
+            y_test_neutre_and_very_bad.append(y_test[i])
+
+        if(y_test[i]=="very bad" or y_test[i]=="very good"):           
+            
+            X_test_very_bad_and_very_good.append(X_test[i].toarray()[0])
+            
+            y_test_very_bad_and_very_good.append(y_test[i])
+
 
     for i in range(len(y_train)):
+
         if (y_train[i]=="very good" or y_train[i]=="neutre"):
-            if(essais1 is empty):
-             
-                essais1 = csc_matrix(X_train[i])
-            else:
-                essais1+=X_train[i]
-            X_train_very_good_and_neutre.append(np.array(X_train[i]))
+
+            X_train_very_good_and_neutre.append(X_train[i].toarray()[0])
             
             y_train_very_good_and_neutre.append(y_train[i])
-            
-            #X_train_very_good_and_neutre.append(X_train[i])
+
         if (y_train[i]=="very bad" or y_train[i]=="neutre"):
           
-            X_train_neutre_and_very_bad.append(np.array(X_train[i]))
-            if(essais2 is empty):
-                essais2 = csc_matrix(X_train[i])
-            else:
-                essais2+=X_train[i]
+            X_train_neutre_and_very_bad.append(X_train[i].toarray()[0])
             
             y_train_neutre_and_very_bad.append(y_train[i])
-            #X_train_neutre_and_very_bad.append(X_train[i])
+       
         if(y_train[i]=="very bad" or y_train[i]=="very good"):
             
-            m = X_train_very_bad_and_very_good.append(np.array(X_train[i]))
-            if(essais3 is empty):
-                essais3 = csc_matrix(X_train[i])
-            else:
-                essais3+=X_train[i]
+            X_train_very_bad_and_very_good.append(X_train[i].toarray()[0])
             
             y_train_very_bad_and_very_good.append(y_train[i])
+    
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ",type(X_train_very_good_and_neutre))
+    X_train_very_good_and_neutre = sparse.csc_matrix(X_train_very_good_and_neutre)
+    X_train_neutre_and_very_bad = sparse.csc_matrix(X_train_neutre_and_very_bad)
+    X_train_very_bad_and_very_good = sparse.csc_matrix(X_train_very_bad_and_very_good)
 
+    X_test_very_good_and_neutre = sparse.csc_matrix(X_test_very_good_and_neutre)
+    X_test_neutre_and_very_bad = sparse.csc_matrix(X_test_neutre_and_very_bad)
+    X_test_very_bad_and_very_good = sparse.csc_matrix(X_test_very_bad_and_very_good)
+    
+    clf_svc1.fit(X_train_very_good_and_neutre, y_train_very_good_and_neutre)
+    clf_svc2.fit(X_train_neutre_and_very_bad, y_train_neutre_and_very_bad) 
+    clf_svc3.fit(X_train_very_bad_and_very_good, y_train_very_bad_and_very_good)
 
-
-            #X_train_very_bad_and_very_good.append(X_train[i])
-    print(type(essais1),type(y_train),type(y_train_very_good_and_neutre))
-    print(essais1.shape,len(y_train_very_good_and_neutre))
-    clf_svc1.fit(essais1, y_train_very_good_and_neutre) # j'ai essayé de convertir X_train_very_good_and_neutre mais ca bug 
-    clf_svc2.fit(X_train_neutre_and_very_bad, y_train_neutre_and_very_bad) # bug a cause de X_train_neutre_and_very_bad qui n'est pas une csr_matrix
-    clf_svc3.fit(X_train_very_bad_and_very_good, y_train_very_bad_and_very_good)# bug 
+    """display = PrecisionRecallDisplay.from_estimator(
+    clf_svc1, X_test_very_good_and_neutre, y_test_very_good_and_neutre, name="LinearSVC")
+    _ = display.ax_.set_title("2-class Precision-Recall curve")
+    input()"""
     
     #Le modèle prédit sur la zone de test 
-    result1 = clf_svc1.predict(X_test) 
-    result2 = clf_svc2.predict(X_test) 
-    result3 = clf_svc3.predict(X_test) 
-
+    result1 = clf_svc1.predict(X_test_very_good_and_neutre) 
+    result2 = clf_svc2.predict(X_test_neutre_and_very_bad) 
+    result3 = clf_svc3.predict(X_test_very_bad_and_very_good) 
+   
     #statistiques
-    print("very good and neutre = ",classification_report(y_test, result1))
-    print("neutre and very bad = ",classification_report(y_test, result2))
-    print("very good and very bad = ",classification_report(y_test, result3))
+    print("very good and neutre = \n",classification_report(y_test_very_good_and_neutre, result1))
+    print("neutre and very bad = \n",classification_report(y_test_neutre_and_very_bad, result2))
+    print("very good and very bad = \n",classification_report(y_test_very_bad_and_very_good, result3))
     
-
-    
-
-
     #On compare le resultat aux notes
-    print("very good and neutre = ",confusion_matrix(result1, y_test))
-    print("neutre and very bad = ",confusion_matrix(result2, y_test))
-    print("very good and very bad = ",confusion_matrix(result3, y_test))
-    #print(reviews)
+    print("very good and neutre = \n",confusion_matrix(result1, y_test_very_good_and_neutre))
+    print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad))
+    print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good))
+
 
     
+##############Pour inserer de nouveau commentaire     
+
+    commentaire = "it's a really bad phone"    
+    
+    Xnew, _ = make_blobs(n_samples=1, centers=None, n_features=X_train.shape[1]) # permet d'avoir 8922 colonnes 
+      
+    v = np.array(Xnew, dtype=object) # je crée un array de type objet pour pouvoir avoir mon commentaire et des int
+    v[0][0]=commentaire # j'insere mon commentaire a l'indice 0
+    print(commentaire in v[0]) 
+
+    ynew = clf_svc1.predict([v[0].tolist()]) # le bug est ici il faut trouver un moyen de convertir v en csc_matrice 
+    print("la prediction = ",ynew[0])
+
+
+
+################################
+
+    """clf_svc1.predict(c_l) 
+    print(type([[0,1]]))
+    X = c_l_matrix.iloc[: ,: 11].values
+    clf_svc1.predict(sparse.csc_matrix([np.array(X_train[0].toarray()[0]).ravel(), np.array(c_l_matrix.toarray()[0]).ravel()]).T).reshape(X_train.shape)
+    prediction = clf_svc1.predict(  [[0,1]])
+    clf_svc1.predict([[0,3,4]]) """
+
+    cat_commentaire1 = clf_svc1.predict(X_test)
+    cat_commentaire2 =clf_svc2.predict(X_test)
+    cat_commentaire3 =clf_svc3.predict(X_test)
+
+    acc=0
+    for i in range(len(y_test)):
+
+        if (y_test[i]==cat_commentaire1[i]):
+            acc+=1
+        elif (y_test[i]==cat_commentaire2[i] ):
+            acc+=1
+        elif (y_test[i]==cat_commentaire3[i]):
+            acc+=1
+    print(acc/len(y_test))
+
+        
+
+    #print("y final = \n",confusion_matrix(y_final, y_test))
+    
+    
+    
+
+ 
     return 0
     
 
