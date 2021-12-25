@@ -21,7 +21,8 @@ import numpy as np
 from sklearn.metrics import PrecisionRecallDisplay
 from sklearn.metrics import precision_score
 from pandas import *
-from sklearn import *
+from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import make_blobs
 
 
     # a faire :
@@ -42,16 +43,17 @@ def algo_with_svm():
     #Vectorizer les phrases
     vectorizer = CountVectorizer()
     reviews = vectorizer.fit_transform(reviews)
-
+    
 
     #Split la liste entre la zone de training et de test 
     X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.30)
-   
+    print(type(reviews),reviews.getnnz(),type(X_train),X_train.getnnz())
     #Declaration du modele
 
-    clf_svc1 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
+    #clf_svc1 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
     clf_svc2 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
     clf_svc3 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
+    clf_svc1 = LogisticRegression()
 
     #<class 'scipy.sparse.csr.csr_matrix'>
 
@@ -81,7 +83,6 @@ def algo_with_svm():
 
         if (y_test[i]=="very bad" or y_test[i]=="neutre"):
           
-            
             X_test_neutre_and_very_bad.append(X_test[i].toarray()[0])
             
             y_test_neutre_and_very_bad.append(y_test[i])
@@ -96,13 +97,13 @@ def algo_with_svm():
     for i in range(len(y_train)):
 
         if (y_train[i]=="very good" or y_train[i]=="neutre"):
-
+        
             X_train_very_good_and_neutre.append(X_train[i].toarray()[0])
             
             y_train_very_good_and_neutre.append(y_train[i])
 
         if (y_train[i]=="very bad" or y_train[i]=="neutre"):
-          
+            
             X_train_neutre_and_very_bad.append(X_train[i].toarray()[0])
             
             y_train_neutre_and_very_bad.append(y_train[i])
@@ -113,7 +114,7 @@ def algo_with_svm():
             
             y_train_very_bad_and_very_good.append(y_train[i])
     
-    
+    #print(X_train_very_good_and_neutre)
     X_train_very_good_and_neutre = sparse.csc_matrix(X_train_very_good_and_neutre)
     X_train_neutre_and_very_bad = sparse.csc_matrix(X_train_neutre_and_very_bad)
     X_train_very_bad_and_very_good = sparse.csc_matrix(X_train_very_bad_and_very_good)
@@ -132,6 +133,7 @@ def algo_with_svm():
     input()"""
     
     #Le modèle prédit sur la zone de test 
+    
     result1 = clf_svc1.predict(X_test_very_good_and_neutre) 
     result2 = clf_svc2.predict(X_test_neutre_and_very_bad) 
     result3 = clf_svc3.predict(X_test_very_bad_and_very_good) 
@@ -146,63 +148,74 @@ def algo_with_svm():
     print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad))
     print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good))
 
-    y_final = []
-    
-    
 
-    """commentaire = "it's a really good phone"
-    c_l = list()
-    c_l.append(commentaire)
-    c_l = vectorizer.fit_transform(c_l)
-    c_l_matrix = sparse.csc_matrix(c_l)
-    print(np.shape(X_train))
-    print(np.shape(c_l_matrix))
-    print(X_train[0])
-    print(X_train[0].todense())
-    print(c_l_matrix[0])
+    
+##############Pour inserer de nouveau commentaire     
 
+    
+    reviews2 = data['Reviews'].head(5000)
+    reviews2[0] = "Stopped working after 2 months. Not happy with this phone." # le commentaire que tu souhaite traiter
+    #print(reviews2)
+    reviews2 = vectorizer.fit_transform(reviews2)
+
+    ynew1 = clf_svc1.predict(reviews2) 
+    ynew2 = clf_svc2.predict(reviews2)
+    ynew3 = clf_svc3.predict(reviews2)
+    """print(ynew1)
+    print("la prediction = ",ynew1[0])
+    print(ynew2)
+    print("la prediction = ",ynew2[0])
+    print(ynew3)
+    print("la prediction = ",ynew3[0])"""
+    
+    if (ynew1[0]=="neutre"): # une sorte de one vs one si j'ai bien compris le principe 
+        
+        if (ynew2[0]== "neutre"):
+            return "neutre"
+        else:
+  
+            if (ynew3[0]=="very bad"):
+                return "very bad"
+    else:
+        if (ynew3[0]=="very good"):
+                return "very good"
+        else:
+            if(ynew2[0]== "neutre"):
+                return "very good "
+            else:
+                return "conflit"
+
+
+
+
+
+################################
+
+    """clf_svc1.predict(c_l) 
+    print(type([[0,1]]))
+    X = c_l_matrix.iloc[: ,: 11].values
+    clf_svc1.predict(sparse.csc_matrix([np.array(X_train[0].toarray()[0]).ravel(), np.array(c_l_matrix.toarray()[0]).ravel()]).T).reshape(X_train.shape)
+    prediction = clf_svc1.predict(  [[0,1]])
     clf_svc1.predict([[0,3,4]]) """
-
-
-
-
-
-
-
-
-
-
-
 
     cat_commentaire1 = clf_svc1.predict(X_test)
     cat_commentaire2 =clf_svc2.predict(X_test)
     cat_commentaire3 =clf_svc3.predict(X_test)
-    print(type([y_test[0]]))
+
+    acc=0
     for i in range(len(y_test)):
-        o1=0
-        o2=0
-        o3 = 0
-        if (y_test[i]=="very good" or y_test[i]=="neutre"):
-            print(y_test[i],[cat_commentaire1[i]])
-            o1 = precision_score(y_test[i],cat_commentaire1[i],pos_label=['neutre', 'very good'])
-        if (y_test[i]=="very bad" or y_test[i]=="neutre"):
-            o2 = precision_score(y_test[i],cat_commentaire2[i],pos_label=['neutre', 'very bad'])
-        if (y_test[i]=="very good" or y_test[i]=="very bad"):
-            o3 = precision_score(y_test[i],cat_commentaire3[i],pos_label=['very bad', 'very good'])
 
-        if (max(o1,o2,o3)==o1):
+        if (y_test[i]==cat_commentaire1[i]):
+            acc+=1
+        elif (y_test[i]==cat_commentaire2[i] ):
+            acc+=1
+        elif (y_test[i]==cat_commentaire3[i]):
+            acc+=1
+    print(acc/len(y_test))
+
         
-            y_final.append(cat_commentaire1[i])
 
-        elif (max(o1,o2,o3)==o2):
-     
-            y_final.append(cat_commentaire2[i])
-
-        else:
-
-            y_final.append(cat_commentaire3[i])
-
-    print("y final = \n",confusion_matrix(y_final, y_test))
+    #print("y final = \n",confusion_matrix(y_final, y_test))
     
     
     
