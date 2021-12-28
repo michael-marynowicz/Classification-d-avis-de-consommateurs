@@ -1,4 +1,3 @@
-from re import M
 import nltk
 import gensim
 from textblob import TextBlob
@@ -6,56 +5,38 @@ nltk.downloader.download('vader_lexicon')
 nltk.download('word2vec_sample')
 from nltk.data import find
 from nltk.sentiment import SentimentIntensityAnalyzer
-from math import *
 import pandas as pd
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
-import numpy as np
-from numpy import array, empty
 from scipy import sparse
-from scipy.sparse import csr_matrix
 import numpy as np
-from sklearn.metrics import PrecisionRecallDisplay
-from sklearn.metrics import precision_score
-from pandas import *
 from sklearn.linear_model import LogisticRegression
-from sklearn.datasets import make_blobs
-
-
-    # a faire :
-        # utiliser word2vec
 
 sia = SentimentIntensityAnalyzer()
 
 def algo_with_svm():
     #RECUPERATION DU CSV
     data = pd.read_csv('reviews.csv')
-    nom = data["Product Name"].head(5000)
-    reviews = data['Reviews'].head(5000)
-
-    #reviews = correction(reviews) utiliser la correction prend beaucoup de temps et n'augmente pas la precision
-    rating = data['Rating'].head(5000)
-    cat = categorie(rating)
+    nom = data["Product Name"].head(10000)
+    reviews = data['Reviews'].head(10000)
+    rating = data['Rating'].head(10000)
+    cat = categorie(rating) # transformation des notes en categorie
     
     #Vectorizer les phrases
     vectorizer = CountVectorizer()
     reviews = vectorizer.fit_transform(reviews)
     
-
     #Split la liste entre la zone de training et de test 
     X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.30)
-    print(type(reviews),reviews.getnnz(),type(X_train),X_train.getnnz())
+
     #Declaration du modele
+    clf_svc1 = svm.SVC(probability=True)
+    clf_svc2 = svm.SVC(probability=True)
+    clf_svc3 = svm.SVC(probability=True)
 
-    #clf_svc1 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
-    clf_svc2 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
-    clf_svc3 = svm.SVC(kernel='rbf', decision_function_shape='ovr')
-    clf_svc1 = LogisticRegression()
-
-    #<class 'scipy.sparse.csr.csr_matrix'>
 
     X_train_very_good_and_neutre = []
     X_test_very_good_and_neutre = []
@@ -75,6 +56,7 @@ def algo_with_svm():
     y_train_very_bad_and_very_good = []
     y_test_very_bad_and_very_good = []
 
+    #trie des y_test pour les 3 SVM specialisées 
     for i in range(len(y_test)):
         if (y_test[i]=="very good" or y_test[i]=="neutre"):
             X_test_very_good_and_neutre.append(X_test[i].toarray()[0])
@@ -93,7 +75,7 @@ def algo_with_svm():
             
             y_test_very_bad_and_very_good.append(y_test[i])
 
-
+    #trie des y_train pour les 3 SVM specialisées 
     for i in range(len(y_train)):
 
         if (y_train[i]=="very good" or y_train[i]=="neutre"):
@@ -114,7 +96,7 @@ def algo_with_svm():
             
             y_train_very_bad_and_very_good.append(y_train[i])
     
-    #print(X_train_very_good_and_neutre)
+    #Conversion en csc_matrix pour l'entrainement et l'application des SVM
     X_train_very_good_and_neutre = sparse.csc_matrix(X_train_very_good_and_neutre)
     X_train_neutre_and_very_bad = sparse.csc_matrix(X_train_neutre_and_very_bad)
     X_train_very_bad_and_very_good = sparse.csc_matrix(X_train_very_bad_and_very_good)
@@ -126,102 +108,139 @@ def algo_with_svm():
     clf_svc1.fit(X_train_very_good_and_neutre, y_train_very_good_and_neutre)
     clf_svc2.fit(X_train_neutre_and_very_bad, y_train_neutre_and_very_bad) 
     clf_svc3.fit(X_train_very_bad_and_very_good, y_train_very_bad_and_very_good)
-
-    """display = PrecisionRecallDisplay.from_estimator(
-    clf_svc1, X_test_very_good_and_neutre, y_test_very_good_and_neutre, name="LinearSVC")
-    _ = display.ax_.set_title("2-class Precision-Recall curve")
-    input()"""
     
     #Le modèle prédit sur la zone de test 
-    
     result1 = clf_svc1.predict(X_test_very_good_and_neutre) 
     result2 = clf_svc2.predict(X_test_neutre_and_very_bad) 
     result3 = clf_svc3.predict(X_test_very_bad_and_very_good) 
    
     #statistiques
-    print("very good and neutre = \n",classification_report(y_test_very_good_and_neutre, result1))
-    print("neutre and very bad = \n",classification_report(y_test_neutre_and_very_bad, result2))
-    print("very good and very bad = \n",classification_report(y_test_very_bad_and_very_good, result3))
+    print("very good and neutre = \n",classification_report(y_test_very_good_and_neutre, result1),"\n")
+    print("neutre and very bad = \n",classification_report(y_test_neutre_and_very_bad, result2),"\n")
+    print("very good and very bad = \n",classification_report(y_test_very_bad_and_very_good, result3),"\n")
     
-    #On compare le resultat aux notes
-    print("very good and neutre = \n",confusion_matrix(result1, y_test_very_good_and_neutre))
-    print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad))
-    print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good))
+    #Affichage des matrice de confusion
+    print("very good and neutre = \n",confusion_matrix(result1, y_test_very_good_and_neutre),"\n")
+    print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad),"\n")
+    print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good),"\n")
 
 
     
-##############Pour inserer de nouveau commentaire     
-
+#Pour inserer de nouveau commentaire     
     
-    reviews2 = data['Reviews'].head(5000)
-    reviews2[0] = "Stopped working after 2 months. Not happy with this phone." # le commentaire que tu souhaite traiter
-    #print(reviews2)
+    reviews2 = data['Reviews'].head(10000)
+    reviews2[0] = "I am not happy it's a bad phone" # le commentaire que l'on souhaite traiter
     reviews2 = vectorizer.fit_transform(reviews2)
-
+    
     ynew1 = clf_svc1.predict(reviews2) 
     ynew2 = clf_svc2.predict(reviews2)
     ynew3 = clf_svc3.predict(reviews2)
-    """print(ynew1)
-    print("la prediction = ",ynew1[0])
-    print(ynew2)
-    print("la prediction = ",ynew2[0])
-    print(ynew3)
-    print("la prediction = ",ynew3[0])"""
-    
-    if (ynew1[0]=="neutre"): # une sorte de one vs one si j'ai bien compris le principe 
-        
+    print("votre commentaire est caracterisé de : ")
+    #One vs One
+    if (ynew1[0]=="neutre"): 
         if (ynew2[0]== "neutre"):
-            return "neutre"
+            print("neutre\n")
         else:
   
             if (ynew3[0]=="very bad"):
-                return "very bad"
+                print("very bad\n")
     else:
         if (ynew3[0]=="very good"):
-                return "very good"
+                print("very good\n")
         else:
             if(ynew2[0]== "neutre"):
-                return "very good "
+                print("very good\n")
             else:
-                return "conflit"
+                print("conflit\n")
 
-
-
-
-
-################################
-
-    """clf_svc1.predict(c_l) 
-    print(type([[0,1]]))
-    X = c_l_matrix.iloc[: ,: 11].values
-    clf_svc1.predict(sparse.csc_matrix([np.array(X_train[0].toarray()[0]).ravel(), np.array(c_l_matrix.toarray()[0]).ravel()]).T).reshape(X_train.shape)
-    prediction = clf_svc1.predict(  [[0,1]])
-    clf_svc1.predict([[0,3,4]]) """
-
+# regroupement des 3 SVM specialisées pour traiter les reviews entierement avec les 3 categories confondues
     cat_commentaire1 = clf_svc1.predict(X_test)
     cat_commentaire2 =clf_svc2.predict(X_test)
     cat_commentaire3 =clf_svc3.predict(X_test)
 
+    predictions1 = clf_svc1.predict_proba(X_test)
+    predictions2 = clf_svc2.predict_proba(X_test)
+    predictions3 = clf_svc3.predict_proba(X_test)
+
+
     acc=0
+    y_final = []
     for i in range(len(y_test)):
-
-        if (y_test[i]==cat_commentaire1[i]):
-            acc+=1
-        elif (y_test[i]==cat_commentaire2[i] ):
-            acc+=1
-        elif (y_test[i]==cat_commentaire3[i]):
-            acc+=1
-    print(acc/len(y_test))
-
+        very_good = 0
+        very_bad = 0
+        neutre = 0
+        #nous demandons au SVM ce qu'elles ont predit pour cette reviews
+        if (cat_commentaire1[i]=="very good" and predictions1[i][1]>0.5):
+            very_good+=1
+        if (cat_commentaire3[i]=="very good" and predictions3[i][1]>0.5):
+            very_good+=1
+        if (cat_commentaire2[i]=="very bad" and predictions2[i][1]>0.5):
+            very_bad+=1
+        if (cat_commentaire3[i]=="very bad" and predictions3[i][0]>0.5):
+            very_bad+=1
+        if (cat_commentaire1[i]=="neutre" and predictions1[i][0]>0.5):
+            neutre+=1
+        if (cat_commentaire2[i]=="neutre" and predictions2[i][0]>0.5):
+            neutre+=1
+        
         
 
-    #print("y final = \n",confusion_matrix(y_final, y_test))
-    
-    
-    
+        # si 2 SVM sont d'accord alors nous considerons que c'est la bonne prediction
+        if (very_good==2):
+            if (y_test[i]=="very good"): # si c'est effectivement la bonne nous augmentons notre accumulateur de bonne prediction 
+                acc+=1
+            y_final.append("very good")
+        elif (very_bad==2):
+            if (y_test[i]=="very bad"):
+                acc+=1
+            y_final.append("very bad")
+        elif (neutre==2):
+            if (y_test[i]=="neutre"):
+                acc+=1
+            y_final.append("neutre")
+        else:
+            p1 = max(predictions1[i][0],predictions1[i][1])
+            p2 = max(predictions2[i][0],predictions2[i][1])
+            p3 = max(predictions3[i][0],predictions3[i][1])
+        
+            if (max(p1,p2,p3)==p1):
+                if (max(predictions1[i][0],predictions1[i][1])==predictions1[i][0]):
+                    y_final.append("neutre")
+                    if (y_test[i]=="neutre"):
+                        acc+=1
+                else:
+                    if (y_test[i]=="very good"):
+                        acc+=1
+                    y_final.append("very good")
 
+            elif (max(p1,p2,p3)==p2):
+                if (max(predictions2[i][0],predictions2[i][1])==predictions2[i][0]):
+                    if (y_test[i]=="neutre"):
+                        acc+=1
+                    y_final.append("neutre")
+                else:
+                    if (y_test[i]=="very bad"):
+                        acc+=1
+                    y_final.append("very bad")
+          
+            else:
+                if (max(predictions3[i][0],predictions3[i][1])==predictions3[i][0]):
+                    if (y_test[i]=="very bad"):
+                        acc+=1
+                    y_final.append("very bad")
+                else:
+                    if (y_test[i]=="very good"):
+                        acc+=1
+                    y_final.append("very good")
+            
+            
+        
+
+    print(confusion_matrix(y_final, y_test))
+
+    print("statistiique totaux = \n",classification_report(y_test, y_final))
  
-    return 0
+    return ("la precision sur l'ensemble des reviews traitées est de : "+str((acc/len(y_test))*100)+"%")
     
 
 
@@ -241,30 +260,13 @@ def categorie(tab):
             cat.append("neutre")
         else: 
             cat.append("very good")
-    verybad = 0
-    neutre=0
-    verygood=0
-    for i in range(len(cat)):
-        if (cat[i]=="very bad"):
-            verybad+=1
-        elif (cat[i]=="neutre"):
-            neutre+=1
-        elif (cat[i]=="very good"):
-            verygood+=1
-            
-    print("very bad = ",verybad,"neutre = ",neutre,"very good = ",verygood)
     return cat
+
+
 print(algo_with_svm())
 
 ########################################### a garder pour citer dans le rapport ##################################################################
-"""for i in range(len(reviews)):# au lieu de prendre la review en entier on prend seulement les adjectifs de la reviews
-        tokens = nltk.word_tokenize(reviews[i])
-        tokensWithType = nltk.pos_tag(tokens)
-        sentence =''
-        for wt, type in tokensWithType:
-            if (type.startswith('JJ')):
-                sentence+=' '+wt
-        reviews[i]=sentence"""
+
 
 def essais():
     file_content = pd.read_csv('reviews.csv')
@@ -281,6 +283,7 @@ def essais():
 
     note_neutre = evalue_with_context(context_list)
     return get_note(sentence_without_neutre,note_neutre)
+
 def determine_polarity(text):
     blob = TextBlob(text)
     acc=0
@@ -290,8 +293,6 @@ def determine_polarity(text):
         acc+=1
     return result/acc
 
-
-    
 def evalue_with_context(all_neutre_list):
     note=0
     acc=0
