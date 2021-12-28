@@ -9,7 +9,8 @@
 
 **Pour executer le projet**
 ---
-> Pour exécuter le projet veuillez lancer le fichier traitement.py. 
+> Pour exécuter le projet veuillez lancer le fichier traitement.py.
+ 
 > Le fichier met environ 70 secondes a run 
 
 
