@@ -33,15 +33,9 @@ def algo_with_svm():
     X_train , X_test , y_train, y_test = train_test_split(reviews, cat, test_size=0.30)
 
     #Declaration du modele
-<<<<<<< HEAD
     clf_svc1 = svm.SVC(probability=True)
     clf_svc2 = svm.SVC(probability=True)
     clf_svc3 = svm.SVC(probability=True)
-=======
-    clf_svc1 = LogisticRegression()
-    clf_svc2 = LogisticRegression()
-    clf_svc3 = LogisticRegression()
->>>>>>> f0ee39bd0fb10491cdbc540336a63b1f9086cbfa
 
 
     X_train_very_good_and_neutre = []
@@ -126,26 +120,16 @@ def algo_with_svm():
     print("very good and very bad = \n",classification_report(y_test_very_bad_and_very_good, result3),"\n")
     
     #Affichage des matrice de confusion
-<<<<<<< HEAD
     print("very good and neutre = \n",confusion_matrix(result1, y_test_very_good_and_neutre),"\n")
     print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad),"\n")
     print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good),"\n")
-=======
-    print("very good and neutre = \n",confusion_matrix(result1, y_test_very_good_and_neutre))
-    print("neutre and very bad = \n",confusion_matrix(result2, y_test_neutre_and_very_bad))
-    print("very good and very bad = \n",confusion_matrix(result3, y_test_very_bad_and_very_good))
->>>>>>> f0ee39bd0fb10491cdbc540336a63b1f9086cbfa
 
 
     
 #Pour inserer de nouveau commentaire     
     
     reviews2 = data['Reviews'].head(10000)
-<<<<<<< HEAD
     reviews2[0] = "I am not happy it's a bad phone" # le commentaire que l'on souhaite traiter
-=======
-    reviews2[0] = "Stopped working after 2 months. Not happy with this phone." # le commentaire que l'on souhaite traiter
->>>>>>> f0ee39bd0fb10491cdbc540336a63b1f9086cbfa
     reviews2 = vectorizer.fit_transform(reviews2)
     
     ynew1 = clf_svc1.predict(reviews2) 
@@ -155,7 +139,6 @@ def algo_with_svm():
     #One vs One
     if (ynew1[0]=="neutre"): 
         if (ynew2[0]== "neutre"):
-<<<<<<< HEAD
             print("neutre\n")
         else:
   
@@ -169,21 +152,6 @@ def algo_with_svm():
                 print("very good\n")
             else:
                 print("conflit\n")
-=======
-            print("neutre")
-        else:
-  
-            if (ynew3[0]=="very bad"):
-                print("very bad")
-    else:
-        if (ynew3[0]=="very good"):
-                print("very good")
-        else:
-            if(ynew2[0]== "neutre"):
-                print("very good ")
-            else:
-                print("conflit")
->>>>>>> f0ee39bd0fb10491cdbc540336a63b1f9086cbfa
 
 # regroupement des 3 SVM specialisées pour traiter les reviews entierement avec les 3 categories confondues
     cat_commentaire1 = clf_svc1.predict(X_test)
@@ -202,7 +170,6 @@ def algo_with_svm():
         very_bad = 0
         neutre = 0
         #nous demandons au SVM ce qu'elles ont predit pour cette reviews
-<<<<<<< HEAD
         if (cat_commentaire1[i]=="very good" and predictions1[i][1]>0.5):
             very_good+=1
         if (cat_commentaire3[i]=="very good" and predictions3[i][1]>0.5):
@@ -269,37 +236,6 @@ def algo_with_svm():
             
         
 
-=======
-        if (cat_commentaire1[i]=="very good"):
-            very_good+=1
-        if (cat_commentaire1[i]=="neutre"):
-            neutre+=1
-        if (cat_commentaire2[i]=="neutre"):
-            neutre+=1
-        if (cat_commentaire2[i]=="very bad"):
-            very_bad+=1
-        if (cat_commentaire3[i]=="very bad"):
-            very_bad+=1
-        if (cat_commentaire3[i]=="very good"):
-            very_good+=1
-
-        # si 2 SVM sont d'accord alors nous considerons que c'est la bonne prediction
-        if (very_good==2):
-            if (y_test[i]=="very good"): # si c'est effectivement la bonne nous augmentons notre accumulateur de bonne prediction 
-                acc+=1
-            y_final.append("very good")
-        elif (very_bad==2):
-            if (y_test[i]=="very bad"):
-                acc+=1
-            y_final.append("very bad")
-        elif (neutre==2):
-            if (y_test[i]=="neutre"):
-                acc+=1
-            y_final.append("neutre")
-        else:
-            y_final.append("very good")
-
->>>>>>> f0ee39bd0fb10491cdbc540336a63b1f9086cbfa
     print(confusion_matrix(y_final, y_test))
 
     print("statistiique totaux = \n",classification_report(y_test, y_final))
