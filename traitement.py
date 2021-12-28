@@ -13,7 +13,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from scipy import sparse
 import numpy as np
-from sklearn.linear_model import LogisticRegression
 
 sia = SentimentIntensityAnalyzer()
 
@@ -129,7 +128,9 @@ def algo_with_svm():
 #Pour inserer de nouveau commentaire     
     
     reviews2 = data['Reviews'].head(10000)
-    reviews2[0] = "I am not happy it's a bad phone" # le commentaire que l'on souhaite traiter
+    #reviews2[0] = "I am not happy it's a bad phone"  le commentaire que l'on souhaite traiter ici il est very bad
+    reviews2[0] = "I am really happy it's this best phone of the word" #ici very good 
+    
     reviews2 = vectorizer.fit_transform(reviews2)
     
     ynew1 = clf_svc1.predict(reviews2) 
@@ -149,11 +150,12 @@ def algo_with_svm():
                 print("very good\n")
         else:
             if(ynew2[0]== "neutre"):
-                print("very good\n")
+                print("neutre\n")
             else:
-                print("conflit\n")
+                print("very bad\n")
 
 # regroupement des 3 SVM specialisées pour traiter les reviews entierement avec les 3 categories confondues
+
     cat_commentaire1 = clf_svc1.predict(X_test)
     cat_commentaire2 =clf_svc2.predict(X_test)
     cat_commentaire3 =clf_svc3.predict(X_test)
@@ -199,7 +201,7 @@ def algo_with_svm():
                 acc+=1
             y_final.append("neutre")
         else:
-            p1 = max(predictions1[i][0],predictions1[i][1])
+            p1 = max(predictions1[i][0],predictions1[i][1]) # si le score est de 1,1,1 nous analysons les precision
             p2 = max(predictions2[i][0],predictions2[i][1])
             p3 = max(predictions3[i][0],predictions3[i][1])
         
@@ -264,74 +266,4 @@ def categorie(tab):
 
 
 print(algo_with_svm())
-
-########################################### a garder pour citer dans le rapport ##################################################################
-
-
-def essais():
-    file_content = pd.read_csv('reviews.csv')
-    
-    tokens = nltk.word_tokenize("gooddd")
-    tokensWithType = nltk.pos_tag(tokens)
-    sentence =''
-    for wt, type in tokensWithType:
-        if (type.startswith('JJ')):
-            sentence+=' '+wt
-    neutre = extract_neutre(sentence)
-
-    context_list,sentence_without_neutre = context(file_content,neutre) 
-
-    note_neutre = evalue_with_context(context_list)
-    return get_note(sentence_without_neutre,note_neutre)
-
-def determine_polarity(text):
-    blob = TextBlob(text)
-    acc=0
-    result=0
-    for sentence in blob.sentences:
-        result+=(sentence.sentiment.polarity+1)*2.5
-        acc+=1
-    return result/acc
-
-def evalue_with_context(all_neutre_list):
-    note=0
-    acc=0
-    for i in range(len(all_neutre_list)):
-        note +=determine_polarity(all_neutre_list[i])
-        acc+=1
-    return note/acc
-
-def context(file_content,neutres): #essais pour avoir le context
-    context_of_neutre_word = []
-    file_content_list = list(file_content.split(" "))
-    for i in range(len(file_content_list)):
-        if (file_content_list[i] in neutres and (i>0 and i<len(file_content_list)-1)):
-            context = file_content_list[i-1]+' '+file_content_list[i]+' '+file_content_list[i+1]
-            context_of_neutre_word.append(context)
-            file_content=file_content.replace(context,"")
-            
-    return context_of_neutre_word,file_content
-
-def extract_neutre(sentence):
-
-    neutre = ''
-    sentence_list = list(sentence.split(" "))
-    for i in range(len(sentence_list)):
-        if (sia.polarity_scores(sentence_list[i])['neu']==1):
-            neutre+=sentence_list[i]+' '
-    return neutre
-
-def get_sentiment(sentence):
-    sia = SentimentIntensityAnalyzer()
-    return sia.polarity_scores(sentence)
-
-def get_synonyme(word):
-    word2vec_sample =str(find('models/word2vec_sample/pruned.word2vec.txt'))
-    model = gensim.models.KeyedVectors.load_word2vec_format(word2vec_sample, binary=False)
-    return model.most_similar(positive=[word], topn = 1)
-
-def get_note(content,note_neutre):
-    print(determine_polarity(content))
-    return (determine_polarity(content)+note_neutre)/2 # on retourne le total des etoiles 
-
 
